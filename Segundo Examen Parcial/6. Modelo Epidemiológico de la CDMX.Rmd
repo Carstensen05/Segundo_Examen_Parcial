@@ -1,0 +1,173 @@
+---
+title: "Modelo epidemiológico de la CDMX"
+author: "Max Orozco Carstensen"
+date: "2023-10-12"
+output: html_document
+---
+
+Considera el modelo que usó la CDMX para moniterear al inicio de la pandemia de COVID-19 los casos, los hospitalizados y muertes en dicha entidad. El modelo se encuentra [acá](https://modelo.covid19.cdmx.gob.mx/modelo-epidemico)
+
+1.  **Explica el significado de cada ecuación: es decir, explica el significado de cada término y cada parámetro.**
+
+-   $R0$: Número reproductivo básico.
+
+-   $Dinfect$: Tiempo que un individuo es infeccioso.
+
+-   $Dincub$: Tiempo de incubación del virus.
+
+-   $Pgrave$: Tasa en la que los individuos enfermos son hospitalizados.
+
+-   $Dhosp$: Tiempo entre la aparición de síntomas y la hospitalización.
+
+-   $PICU$: Tasa de individuos que ingresan a terapia intensiva.
+
+-   $DLR$: Tiempo de hospitalización de casos leves.
+
+-   $DHR$: Tiempo entre la hospitalización de casos graves en terapia intensiva y recuperación.
+
+-   $PM$: Tasa de letalidad en población general.
+
+-   $DICU$: Tiempo entre hospitalización e ingreso a terapia intensiva.
+
+-   $DRICU$: Tiempo entre ingreso a terapia intensiva y recuperación.
+
+-   $DM$: Tiempo entre ingreso a terapia intensiva y deceso.
+
+*Susceptibles:*
+
+Afecta:
+
+-   $SI \frac {R0}{Dinfect}$ : Interacción entre susceptibles e infectados, dependiente del valor de R0 y el tiempo que un individuo es infeccioso.
+
+*Expuestos:*
+
+Favorece:
+
+-   $SI \frac {R0}{Dinfect}$ : Interacción entre susceptibles e infectados, dependiente del valor de R0 y el tiempo que un individuo es infeccioso.
+
+Afecta:
+
+-   $E \frac{1}{Dincub}$ : Individuos expuestos que pasan a ser infecciosos, dependiendo del tiempo de incubación del virus.
+
+*Infectados:*
+
+Favorece:
+
+-   $E \frac{1}{Dincub}$ : Individuos expuestos que pasan a ser infecciosos, dependiendo del tiempo de incubación del virus.
+
+Afecta:
+
+-   $I \frac{1}{Dinfect}$ : Individuos infectados que pasan a contagiados sintomáticos leves, dependiendo del tiempo que un individuo es infeccioso.
+
+*Contagiados sintomáticos leves:*
+
+Favorece:
+
+-   $(1 - Pgrave) \frac{1}{Dinfect} I$ : Individuos infectados que pasan a contagiados sintomáticos leves, dependiendo del tiempo que un individuo es infeccioso y la tasa de no hospitalización.
+
+Afecta:
+
+-   $L \frac{1}{DRL}$ : Individuos contagiados sintomáticos leves que se recuperan, dependiendo del tiempo de hospitalización.
+
+*Contagiados sintomáticos graves:*
+
+Favorece:
+
+-   $(Pgrave) \frac{1}{Dinfect} I$ : Individuos infectados que pasan a contagiados sintomáticos leves, dependiendo del tiempo que un individuo es infeccioso y la tasa de hospitalización.
+
+Afecta:
+
+-   $G \frac{1}{Dhosp}$ : Individuos contagiados sintomáticos graves que son hospitalizados.
+
+*Hospitalizados:*
+
+Favorece:
+
+-   $G \frac{1}{Dhosp}$ : Individuos contagiados sintomáticos graves que son hospitalizados.
+
+Afecta:
+
+-   $(1-PICU) \frac{1}{DRH} H$: Individuos contagiados sintomáticos graves hospitalizados que se recuperan.
+
+-   $(1-PICU) \frac{1}{DICU} H$: Individuos contagiados sintomáticos graves hospitalizados que entran a terapia intensiva, dependiendo del tiempo entre hospitalización e ingreso a terapia intensiva.
+
+*Unidad de terapia intensiva:*
+
+Favorece:
+
+-   $(1-PICU) \frac{1}{DICU} H$: Individuos contagiados sintomáticos graves hospitalizados que entran a terapia intensiva, dependiendo del tiempo entre hospitalización e ingreso a terapia intensiva.
+
+Afecta:
+
+-   $(1 - PM) \frac{1}{DRICU} ICU$: Individuos en terapia intensiva que se recuperan.
+
+-   $PM \frac{1}{DM} ICU$: Individuos en terapia intensiva que mueren.
+
+*Recuperados:*
+
+Favorece:
+
+-   $L \frac{1}{DRL}$ : Individuos contagiados sintomáticos leves que se recuperan, dependiendo del tiempo de hospitalización.
+
+-   $(1-PICU) \frac{1}{DRH} H$: Individuos contagiados sintomáticos graves hospitalizados que se recuperan.
+
+-   $(1 - PM) \frac{1}{DRICU} ICU$: Individuos en terapia intensiva que se recuperan.
+
+*Muertos:*
+
+Afecta:
+
+-   $PM \frac{1}{DM} ICU$: Individuos en terapia intensiva que mueren.
+
+2.  **¿La población se conserva?**
+
+No, porque no se toman en cuenta las tazas de nacimientos, ni de muerte en cada compartimento, únicamente como un compartimento per se, al que se llega sólo después de estar en terapia intensiva.
+
+**3. Encuentra, si existe, el punto de equilibrio *free-disease*\
+**
+
+El punto de equilibrio free-disease ocurriría si R0 fuera menor a 1, pues, en el sentido literal, un infectado no podría contagiar ni a 1 persona.
+
+4.  **Usa los parámetros de parámetros que sugieren y resuelve numéricamente el sistema de ecuaciones diferenciales. Asegurate que tu solución alcance un punto de equilibrio. Discute tu resultado.**
+
+```{r}
+library (deSolve) 
+
+SARS <- function (time, state, parameters) {
+  with (as.list (c (state, parameters)), {
+    dS <- - (R0 / Dinfect) * I * S
+    dE <- (R0 / Dinfect) * I * S - (1 / Dincub) * E
+    dI <- (1 / Dincub) * E - (1 / Dinfect) * I
+    dL <- (1 - Pgrave) * (1 / Dinfect) * I - (1 / DRL) * L
+    dG <- Pgrave * (1 / Dinfect) * I - (1 / Dhosp) * G
+    dH <- (1 / Dhosp) * G - (1 - PICU) * (1 / DRH) * H - PICU * (1 / DICU) * H
+    dICU <- PICU * (1 / DICU) * H - (1 - PM) * (1 / DRICU) * ICU - PM * (1 / DM) * ICU
+    dR <- (1 / DRL) * L + (1 - PICU) * (1 / DRH) * H + (1 - PM) * (1 / DRICU) * ICU
+    dM <- PM * (1 / DM) * ICU
+    list (c (dS, dE, dI, dL, dG, dH, dICU, dR, dM)) 
+  })
+}
+
+parameters <- c (Dinfect = 2.9, Dincub = 5.2, Pgrave = 0.1380, DRL = 14, Dhosp = 4, PICU = 0.05, DRH = 12, PM = 0.03, DICU = 1, DRICU = 7, DM = 8, R0 = 2.83)
+initial_conditions <- c (S = 500, E = 10, I = 2, L = 0, G = 0, H = 0, ICU = 0, R = 0, M = 0) 
+time <- seq (0, 150, by = 0.001)
+out <- ode (initial_conditions, time, SARS, parameters)
+
+matplot (out [ , 1], out [ , 2 : 10], type = "l", xlab = "TIEMPO", ylab = "POBLACIÓN", main = "MODELO SARS-Cov-2 en CDMX (0 - 150)", lwd = 3)
+legend ("topright", c ("SUSCEPTIBLE", "EXPUESTO", "INFECTADO", "CONTAGIADOS CON SÍNTOMAS LEVES", "CONTAGIADOS CON SÍNTOMAS GRAVES", "HOSPITALIZADOS", "UCI", "RECUPERADOS", "DECESOS"), col = 1 : 9, lty = 1 : 5, cex = 0.5)
+
+parameters <- c (Dinfect = 2.9, Dincub = 5.2, Pgrave = 0.1380, DRL = 14, Dhosp = 4, PICU = 0.05, DRH = 12, PM = 0.03, DICU = 1, DRICU = 7, DM = 8, R0 = 2.83)
+initial_conditions <- c (S = 500, E = 10, I = 2, L = 0, G = 0, H = 0, ICU = 0, R = 0, M = 0) 
+time <- seq (0, 60, by = 0.001)
+out <- ode (initial_conditions, time, SARS, parameters)
+
+matplot (out [ , 1], out [ , 2 : 10], type = "l", xlab = "TIEMPO", ylab = "POBLACIÓN", main = "MODELO SARS-Cov-2 en CDMX (0 - 60)", lwd = 3)
+legend ("topright", c ("SUSCEPTIBLE", "EXPUESTO", "INFECTADO", "CONTAGIADOS CON SÍNTOMAS LEVES", "CONTAGIADOS CON SÍNTOMAS GRAVES", "HOSPITALIZADOS", "UCI", "RECUPERADOS", "DECESOS"), col = 1 : 9, lty = 1 : 5, cex = 0.5)
+
+```
+
+El punto de equilibrio es al tiempo +/- 60, que es cuando todas las poblaciones dejan de cambiar. Se observa que los contagiados con sintomatología leve son mayores a los graves, por las dinámicas de la enfermedad y la población. Los recuperados, que se muestran de un color distinto a la barrita, comienzan a aumentar de forma exponencial, muy distinto a los decesos, que es el otro posible resultado, también debido a las dinámicas de la enfermedad y la población.
+
+5.  **¿Qué modificaciones se te ocurren que podrían implementarse para mejorar ese modelo?**
+
+Inicialmente, agregaría todos los parámetros de demografía. Además, agregaría variables dependientes del individuo, como la edad, el sexo, la posición económica y el estado inmune; así como más compartimentos y parámetros, igual dependientes de las variables del individuo. Finalmente, buscaría valores de parámetros representativos de la población mexicana y no generalizados de otras poblaciones distintas (pues puede no representar a la población real).

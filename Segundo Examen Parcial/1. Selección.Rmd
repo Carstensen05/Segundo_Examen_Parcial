@@ -1,0 +1,74 @@
+---
+title: "1. Selección"
+author: "Max Orozco Carstensen"
+date: "2023-10-12"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Considera dos poblaciones $x(t)$ y $y(t)$
+
+1.  Si las poblaciones no interactúan, las ecuaciones que gobiernan al
+    sistema son: $$\dot x(t)=ax$$ $$\dot y(t)=by$$
+
+con $a,b >0$, demuestra que la soluciones son:
+
+$$ x(t)=x_0e^{at}$$
+
+$$y(t)=y_0e^{bt}$$ con $x_0$ y $y_0$ las poblaciones iniciales.
+
+*Respuesta:*
+
+$$\dot x(t)=ax$$ $$\frac {dx}{dt} = a (x_oe^{at})$$
+$$a (x_oe^{at}) = a (x_oe^{at})$$ $$\dot y(t)=by$$
+$$\frac {dy}{dt} = b (y_oe^{bt})$$ $$b (y_oe^{bt}) = b (y_oe^{bt})$$
+
+2.  Construye la siguiente varibale $\rho(t)$
+
+$$\rho(t)= \frac{x(t)}{y(t)}$$ Demuestra que la derivada de esa ecuación
+se puede poner como:
+
+$$\dot \rho= (a-b)\rho$$ Sugerencia: utiliza la regla de la derivada de
+un cociente.
+
+*Respuesta:*
+
+$$ \frac {a (x_oe^{at})}{b (y_oe^{bt})}$$
+$$\dot \rho = \frac {a (x_oe^{at})(y_oe^{bt}) - b (y_oe^{bt}) (x_oe^{at})}{(y_oe^{bt})^2}$$
+$$\dot \rho = \frac {(a-b)(x_oe^{at})(y_oe^{bt})}{(y_oe^{bt})^2}$$
+
+$$\dot \rho = (a - b) \rho$$
+
+3.  Demuestra que la solución de la ecuación anterior es:
+
+$$\rho(t) =\rho_0e^{(a-b)*t}$$
+
+*Respuesta:*
+$$\frac {d\rho}{dt} = (a-b)\rho_oe (a-b)t$$$$(a-b)\rho_oe (a-b)t = (a-b)\rho_oe (a-b)t $$
+
+4.  A partir de esta solución demuestra que:
+
+$$\rho(t) =\rho_0e^{(a-b)*t}$$
+
+-   Si $a>b$ entonces $\rho(t)$ tiende a infinito y, por lo tanto, la
+    población x elimina a la población y. Es decir, x se selecciona
+    sobre y.
+
+*Respuesta:*
+
+Si a \> b, el exponente queda positivo y, por tanto, va a tender a
+infinito positivo, durante x tiempo. Eso significará que la población x
+irá a infinito, mientras que la y irá a 0.
+
+-   Si $a<b$ entonces $\rho(t)$ tiende a cero y, por lo tanto, la
+    población y elimina a la población x. Es decir, y se selecciona
+    sobre x.
+
+*Respuesta:*
+
+Si a \< b, el exponente queda negativo y, por tanto, va a tender hacia
+el 0 (porque no puede haber poblaciones negativas), durante x tiempo.
+Eso significará que la población x irá hacia 0, mientras que la y
+crecerá hasta infinito.
